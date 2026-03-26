@@ -1,37 +1,38 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/DevSecOps-AI%20Agent-blue?style=for-the-badge&logo=github-actions" alt="DevSecOps AI Agent"/>
+  <img src="https://img.shields.io/badge/DevSecOps-Security%20Agent-blue?style=for-the-badge&logo=github-actions" alt="DevSecOps Security Agent"/>
 </p>
 
-<h1 align="center">🔐 DevSecOps AI Security Agent</h1>
+<h1 align="center">DevSecOps AI Security Agent</h1>
 
 <p align="center">
-  <strong>Enterprise-Grade Automated AI-Powered Security Analysis for Every Pull Request</strong>
+  <strong>Enterprise-Grade Automated Security Analysis for Every Pull Request</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/anshumaan-10/devsecops-ai-agent/actions"><img src="https://img.shields.io/github/actions/workflow/status/anshumaan-10/devsecops-ai-agent/ai-security-scan.yml?style=flat-square&label=Security%20Scan" alt="Security Scan"/></a>
   <a href="https://github.com/anshumaan-10/devsecops-ai-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"/></a>
   <a href="#"><img src="https://img.shields.io/badge/OWASP-Top%2010-red?style=flat-square" alt="OWASP"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/AI-Powered-purple?style=flat-square&logo=openai" alt="AI Powered"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/python-3.11-blue?style=flat-square&logo=python" alt="Python 3.11"/></a>
 </p>
 
 ---
 
-## 📖 Overview
+## Overview
 
-The **DevSecOps AI Security Agent** is an enterprise-grade, fully automated security analysis pipeline that integrates directly into your GitHub workflow. It leverages AI (OpenAI GPT-4 / compatible LLMs) to perform deep security analysis on every Pull Request — detecting vulnerabilities, hardcoded secrets, injection flaws, and OWASP Top 10 risks — and posts a detailed, actionable security report as a PR comment.
+The **DevSecOps AI Security Agent** is a fully automated security analysis pipeline that integrates directly into your GitHub workflow. It uses GPT-4 to perform deep security analysis on every Pull Request — detecting vulnerabilities, hardcoded secrets, injection flaws, and OWASP Top 10 risks — and posts a detailed, actionable security report as a PR comment.
 
-### 🎯 Why This Exists
+### Why This Exists
 
-Traditional SAST tools generate hundreds of false positives and require manual triage. This agent combines:
-- **AI-powered contextual analysis** — understands code intent, not just patterns
+Traditional SAST tools generate hundreds of false positives and require manual triage. This agent takes a different approach:
+
+- **Contextual analysis** — understands code intent, not just patterns
 - **Automated PR integration** — zero manual intervention required
 - **Enterprise security standards** — OWASP Top 10, CWE mapping, CVSS scoring
 - **Actionable remediation** — specific fix recommendations, not just warnings
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -67,14 +68,14 @@ Traditional SAST tools generate hundreds of false positives and require manual t
 │  │  • File-wise breakdown with code snippets                    │ │
 │  │  • CWE/CVE mapping                                           │ │
 │  │  • Remediation recommendations                               │ │
-│  │  • Approval decision (✅ Approve / ⚠️ Needs Fixes / ❌ Block)│ │
+│  │  • Approval decision (Approve / Needs Fixes / Block Merge) │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -112,7 +113,7 @@ git push origin test/security-scan
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 devsecops-ai-agent/
@@ -132,12 +133,12 @@ devsecops-ai-agent/
 │   └── requirements.txt                # Python dependencies
 ├── vulnerable-app/
 │   ├── src/
-│   │   ├── app.py                      # 🔴 Intentionally vulnerable Flask app
-│   │   ├── auth.py                     # 🔴 Broken authentication module
-│   │   ├── database.py                 # 🔴 SQL injection vulnerable queries
-│   │   └── utils.py                    # 🔴 Hardcoded secrets & unsafe code
+│   │   ├── app.py                      # Intentionally vulnerable Flask app
+│   │   ├── auth.py                     # Broken authentication module
+│   │   ├── database.py                 # SQL injection vulnerable queries
+│   │   └── utils.py                    # Hardcoded secrets and unsafe code
 │   ├── config/
-│   │   └── settings.py                 # 🔴 Exposed configuration secrets
+│   │   └── settings.py                 # Exposed configuration secrets
 │   ├── requirements.txt                # App dependencies
 │   └── Dockerfile                      # Container with vulnerabilities
 ├── docs/
@@ -154,7 +155,7 @@ devsecops-ai-agent/
 
 ---
 
-## 🔍 Security Checks Performed
+## Security Checks Performed
 
 | Category | Checks | OWASP Mapping |
 |---|---|---|
@@ -169,26 +170,26 @@ devsecops-ai-agent/
 
 ---
 
-## 📊 Sample PR Security Report
+## Sample PR Security Report
 
 When the agent runs, it posts a comment like this on your PR:
 
 ```markdown
-## 🔐 AI Security Scan Report
+## Security Scan Report
 
-**Scan ID:** `scan-abc123` | **Date:** 2026-03-26 | **Duration:** 12.3s
+**Scan ID:** scan-abc123 | **Date:** 2026-03-26 | **Duration:** 12.3s
 
-### 📊 Summary
+### Summary
 | Severity | Count |
 |----------|-------|
-| 🔴 Critical | 2 |
-| 🟠 High | 3 |
-| 🟡 Medium | 5 |
-| 🔵 Low | 1 |
+| Critical | 2 |
+| High | 3 |
+| Medium | 5 |
+| Low | 1 |
 
-### 🔎 Findings
+### Findings
 
-#### 🔴 Critical — Hardcoded AWS Secret Key
+#### CRITICAL — Hardcoded AWS Secret Key
 - **File:** `vulnerable-app/src/utils.py` (Line 15)
 - **CWE:** CWE-798 (Use of Hard-coded Credentials)
 - **Snippet:**
@@ -197,7 +198,7 @@ When the agent runs, it posts a comment like this on your PR:
   ```
 - **Recommendation:** Use AWS Secrets Manager or environment variables.
 
-#### 🔴 Critical — SQL Injection
+#### CRITICAL — SQL Injection
 - **File:** `vulnerable-app/src/database.py` (Line 23)
 - **CWE:** CWE-89 (SQL Injection)
 - **Snippet:**
@@ -206,13 +207,13 @@ When the agent runs, it posts a comment like this on your PR:
   ```
 - **Recommendation:** Use parameterized queries with SQLAlchemy ORM.
 
-### 🏁 Overall Recommendation
-❌ **Block Merge** — 2 critical vulnerabilities found. Fix before merging.
+### Overall Recommendation
+**Block Merge** — 2 critical vulnerabilities found. Fix before merging.
 ```
 
 ---
 
-## 🛡️ The Vulnerable App (For Testing)
+## The Vulnerable App (For Testing)
 
 The `vulnerable-app/` directory contains an **intentionally vulnerable** Flask application designed to trigger the AI Security Agent. It includes:
 
@@ -225,38 +226,38 @@ The `vulnerable-app/` directory contains an **intentionally vulnerable** Flask a
 - **Sensitive data exposure** (PII in logs)
 - **Security misconfiguration** (debug mode, CORS wildcard)
 
-> ⚠️ **WARNING:** This application is intentionally vulnerable. NEVER deploy it in production.
+> **WARNING:** This application is intentionally vulnerable. Do not deploy it in production under any circumstances.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | ✅ | OpenAI API key for GPT-4 analysis |
-| `GITHUB_TOKEN` | ✅ | GitHub token (auto-provided in Actions) |
-| `GH_PAT` | ✅ | GitHub PAT for PR comments |
-| `AI_MODEL` | ❌ | Model to use (default: `gpt-4`) |
-| `SEVERITY_THRESHOLD` | ❌ | Min severity to report (default: `low`) |
-| `MAX_FILE_SIZE` | ❌ | Max file size to analyze in KB (default: `500`) |
+| `OPENAI_API_KEY` | Yes | OpenAI API key for GPT-4 analysis |
+| `GITHUB_TOKEN` | Yes | GitHub token (auto-provided in Actions) |
+| `GH_PAT` | Yes | GitHub PAT for PR comments |
+| `AI_MODEL` | No | Model to use (default: `gpt-4`) |
+| `SEVERITY_THRESHOLD` | No | Minimum severity to report (default: `low`) |
+| `MAX_FILE_SIZE` | No | Maximum file size to analyze in KB (default: `500`) |
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
 <p align="center">
-  <strong>Built with ❤️ for the DevSecOps community</strong><br/>
-  <em>Securing code, one PR at a time.</em>
+  <strong>Built for the DevSecOps community</strong><br/>
+  <em>Securing code, one pull request at a time.</em>
 </p>

@@ -1,0 +1,67 @@
+name: "📦 Dependency Vulnerability Scan"
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**/requirements.txt'
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '**/Pipfile.lock'
+      - '**/poetry.lock'
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 6AM UTC
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  dependency-scan:
+    name: "🔍 Dependency Scan"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: "📦 Install scanning tools"
+        run: |
+          pip install safety pip-audit
+
+      - name: "🔍 Run pip-audit"
+        continue-on-error: true
+        run: |
+          echo "## 📦 Dependency Audit Report" > /tmp/dep_report.md
+          echo "" >> /tmp/dep_report.md
+
+          for req_file in $(find . -name "requirements.txt" -not -path "./.git/*"); do
+            echo "### Scanning: \`$req_file\`" >> /tmp/dep_report.md
+            echo '```' >> /tmp/dep_report.md
+            pip-audit -r "$req_file" --format columns 2>&1 >> /tmp/dep_report.md || true
+            echo '```' >> /tmp/dep_report.md
+            echo "" >> /tmp/dep_report.md
+          done
+
+      - name: "🛡️ Run Safety Check"
+        continue-on-error: true
+        run: |
+          echo "### Safety Check" >> /tmp/dep_report.md
+          echo '```' >> /tmp/dep_report.md
+          safety check --output text 2>&1 >> /tmp/dep_report.md || true
+          echo '```' >> /tmp/dep_report.md
+
+      - name: "💬 Post Dependency Report"
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file /tmp/dep_report.md

@@ -1,0 +1,132 @@
+name: "🔐 AI Security Scan"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  AI_MODEL: "gpt-4"
+  SEVERITY_THRESHOLD: "low"
+  MAX_FILE_SIZE_KB: 500
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  ai-security-scan:
+    name: "🛡️ AI Security Analysis"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "🐍 Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: "📦 Install Dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r security-agent/requirements.txt
+
+      - name: "🔍 Extract PR Metadata"
+        id: pr-meta
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          echo "repo_owner=${{ github.repository_owner }}" >> $GITHUB_OUTPUT
+          echo "repo_name=${{ github.event.repository.name }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "pr_title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+
+      - name: "📄 Fetch Changed Files"
+        id: changed-files
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          python security-agent/src/file_analyzer.py \
+            --owner "${{ steps.pr-meta.outputs.repo_owner }}" \
+            --repo "${{ steps.pr-meta.outputs.repo_name }}" \
+            --pr-number "${{ steps.pr-meta.outputs.pr_number }}" \
+            --max-file-size "${{ env.MAX_FILE_SIZE_KB }}" \
+            --output /tmp/changed_files.json
+
+          FILE_COUNT=$(python -c "import json; print(len(json.load(open('/tmp/changed_files.json'))))")
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
+          echo "📄 Found $FILE_COUNT changed files to analyze"
+
+      - name: "🤖 Run AI Security Analysis"
+        if: steps.changed-files.outputs.file_count != '0'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_MODEL: ${{ env.AI_MODEL }}
+        run: |
+          python security-agent/src/agent.py \
+            --files /tmp/changed_files.json \
+            --model "${{ env.AI_MODEL }}" \
+            --severity-threshold "${{ env.SEVERITY_THRESHOLD }}" \
+            --output /tmp/security_report.json
+
+      - name: "📊 Generate Security Report"
+        if: steps.changed-files.outputs.file_count != '0'
+        id: report
+        run: |
+          python security-agent/src/report_generator.py \
+            --input /tmp/security_report.json \
+            --format markdown \
+            --output /tmp/pr_comment.md
+
+          # Extract summary for job output
+          CRITICAL=$(python -c "import json; r=json.load(open('/tmp/security_report.json')); print(r.get('summary',{}).get('critical',0))")
+          HIGH=$(python -c "import json; r=json.load(open('/tmp/security_report.json')); print(r.get('summary',{}).get('high',0))")
+          echo "critical_count=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high_count=$HIGH" >> $GITHUB_OUTPUT
+
+      - name: "💬 Post PR Comment"
+        if: steps.changed-files.outputs.file_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          python security-agent/src/github_client.py \
+            --action post-comment \
+            --owner "${{ steps.pr-meta.outputs.repo_owner }}" \
+            --repo "${{ steps.pr-meta.outputs.repo_name }}" \
+            --pr-number "${{ steps.pr-meta.outputs.pr_number }}" \
+            --comment-file /tmp/pr_comment.md
+
+      - name: "🚦 Security Gate"
+        if: steps.changed-files.outputs.file_count != '0'
+        run: |
+          CRITICAL=${{ steps.report.outputs.critical_count }}
+          HIGH=${{ steps.report.outputs.high_count }}
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ BLOCKED: $CRITICAL critical vulnerabilities found!"
+            exit 1
+          fi
+
+          if [ "$HIGH" -gt 2 ]; then
+            echo "⚠️ WARNING: $HIGH high-severity issues found. Review required."
+            exit 1
+          fi
+
+          echo "✅ Security scan passed."
+
+      - name: "📤 Upload Security Report"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report-pr-${{ steps.pr-meta.outputs.pr_number }}
+          path: |
+            /tmp/security_report.json
+            /tmp/pr_comment.md
+          retention-days: 30

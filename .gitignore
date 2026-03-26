@@ -1,0 +1,35 @@
+# Dependencies
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Security — never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+.env.local
+.env.production
+secrets/
+
+# Build artifacts
+*.log
+/tmp/

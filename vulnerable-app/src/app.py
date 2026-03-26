@@ -14,6 +14,8 @@ Vulnerabilities included:
 - Broken Access Control (CWE-284)
 """
 
+import ast
+import operator as op
 import os
 import pickle
 import base64
@@ -283,26 +285,64 @@ def fetch_url():
 
 @app.route("/api/eval", methods=["POST"])
 def eval_expression():
-    """Evaluate a mathematical expression provided by the user."""
-    data = request.get_json()
-    expression = data.get("expression", "")
+    """Evaluate a safe arithmetic expression provided by the user.
 
-    # Dangerous: using eval() on user input allows arbitrary code execution
-    result = eval(expression)
+    Only numeric literals and basic arithmetic operators (+, -, *, /, **)
+    are permitted.  All other constructs are rejected by the AST validator.
+    """
+    ALLOWED_OPS = {
+        ast.Add: op.add,
+        ast.Sub: op.sub,
+        ast.Mult: op.mul,
+        ast.Div: op.truediv,
+        ast.Pow: op.pow,
+        ast.USub: op.neg,
+        ast.UAdd: op.pos,
+    }
+
+    def _safe_eval(node):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        if isinstance(node, ast.BinOp) and type(node.op) in ALLOWED_OPS:
+            return ALLOWED_OPS[type(node.op)](_safe_eval(node.left), _safe_eval(node.right))
+        if isinstance(node, ast.UnaryOp) and type(node.op) in ALLOWED_OPS:
+            return ALLOWED_OPS[type(node.op)](_safe_eval(node.operand))
+        raise ValueError("Unsupported expression")
+
+    data = request.get_json(silent=True) or {}
+
+    expression = data.get("expression")
+    if not isinstance(expression, str) or not expression.strip():
+        return jsonify({"error": "Missing or invalid 'expression' field"}), 400
+
+    try:
+        tree = ast.parse(expression, mode="eval")
+        result = _safe_eval(tree.body)
+    except SyntaxError:
+        return jsonify({"error": "Invalid expression syntax"}), 400
+    except Exception:
+        logging.exception("Error while evaluating expression")
+        return jsonify({"error": "Error while evaluating expression"}), 400
+
     return jsonify({"result": str(result)})
 
 
 @app.route("/api/config/database", methods=["GET"])
 def get_database_config():
-    """Return current database configuration for debugging."""
-    # Exposing internal configuration and credentials via API
+    """Return example database configuration for debugging/tests.
+
+    NOTE: This endpoint returns fake, non-production sample values
+    to avoid exposing real configuration or credentials.
+    """
+    # Sample configuration only – not wired to the real application settings.
+    # Do NOT treat this output as authoritative configuration.
     config = {
-        "db_host": "prod-db.internal.company.com",
+        "db_host": "example-db.internal",
         "db_port": 5432,
-        "db_user": "admin",
-        "db_password": "Pr0duction_DB_Pass!2026",
-        "db_name": "customer_data",
-        "redis_url": "redis://:cache_secret@redis.internal:6379",
+        "db_user": "example_user",
+        "db_password": "example_password",
+        "db_name": "example_customer_data",
+        "redis_url": "redis://:example_cache_secret@redis.example.internal:6379/0",
     }
     return jsonify(config)
 

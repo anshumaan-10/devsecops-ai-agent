@@ -14,6 +14,8 @@ Vulnerabilities included:
 - Broken Access Control (CWE-284)
 """
 
+import ast
+import operator as _op
 import os
 import pickle
 import base64
@@ -281,14 +283,42 @@ def fetch_url():
 # NEW VULNERABLE ENDPOINT — ADDED FOR TESTING AI SECURITY SCAN
 # ============================================================
 
+_SAFE_OPS = {
+    ast.Add: _op.add,
+    ast.Sub: _op.sub,
+    ast.Mult: _op.mul,
+    ast.Div: _op.truediv,
+    ast.Pow: _op.pow,
+    ast.USub: _op.neg,
+    ast.UAdd: _op.pos,
+    ast.Mod: _op.mod,
+    ast.FloorDiv: _op.floordiv,
+}
+
+
+def _safe_eval(node):
+    """Recursively evaluate an AST node, allowing only arithmetic expressions."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.BinOp) and type(node.op) in _SAFE_OPS:
+        return _SAFE_OPS[type(node.op)](_safe_eval(node.left), _safe_eval(node.right))
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _SAFE_OPS:
+        return _SAFE_OPS[type(node.op)](_safe_eval(node.operand))
+    raise ValueError("Unsupported operation in expression")
+
+
 @app.route("/api/eval", methods=["POST"])
 def eval_expression():
-    """Evaluate a mathematical expression provided by the user."""
+    """Evaluate an arithmetic expression provided by the user (safe, no arbitrary code)."""
     data = request.get_json()
     expression = data.get("expression", "")
-
-    # Dangerous: using eval() on user input allows arbitrary code execution
-    result = eval(expression)
+    try:
+        tree = ast.parse(expression, mode="eval")
+        result = _safe_eval(tree.body)
+    except ZeroDivisionError:
+        return jsonify({"error": "Division by zero"}), 400
+    except (ValueError, SyntaxError):
+        return jsonify({"error": "Invalid expression"}), 400
     return jsonify({"result": str(result)})
 
 

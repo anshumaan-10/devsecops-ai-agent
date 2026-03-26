@@ -277,6 +277,36 @@ def fetch_url():
     return jsonify({"status": response.status_code, "body": response.text[:1000]})
 
 
+# ============================================================
+# NEW VULNERABLE ENDPOINT — ADDED FOR TESTING AI SECURITY SCAN
+# ============================================================
+
+@app.route("/api/eval", methods=["POST"])
+def eval_expression():
+    """Evaluate a mathematical expression provided by the user."""
+    data = request.get_json()
+    expression = data.get("expression", "")
+
+    # Dangerous: using eval() on user input allows arbitrary code execution
+    result = eval(expression)
+    return jsonify({"result": str(result)})
+
+
+@app.route("/api/config/database", methods=["GET"])
+def get_database_config():
+    """Return current database configuration for debugging."""
+    # Exposing internal configuration and credentials via API
+    config = {
+        "db_host": "prod-db.internal.company.com",
+        "db_port": 5432,
+        "db_user": "admin",
+        "db_password": "Pr0duction_DB_Pass!2026",
+        "db_name": "customer_data",
+        "redis_url": "redis://:cache_secret@redis.internal:6379",
+    }
+    return jsonify(config)
+
+
 if __name__ == "__main__":
     # 🔴 VULN: Binding to all interfaces, debug mode on
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -88,7 +88,7 @@ Analyze the following code diff for security vulnerabilities.
 class SecurityAgent:
     """AI-powered security analysis agent."""
 
-    def __init__(self, model: str = "gpt-4", severity_threshold: str = "low"):
+    def __init__(self, model: str = "gpt-4o-mini", severity_threshold: str = "low"):
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
@@ -200,7 +200,7 @@ class SecurityAgent:
 def main():
     parser = argparse.ArgumentParser(description="AI Security Analysis Agent")
     parser.add_argument("--files", required=True, help="Path to JSON file with changed files")
-    parser.add_argument("--model", default="gpt-4", help="AI model to use")
+    parser.add_argument("--model", default="gpt-4o-mini", help="AI model to use")
     parser.add_argument("--severity-threshold", default="low", help="Minimum severity to report")
     parser.add_argument("--output", required=True, help="Output JSON file path")
     args = parser.parse_args()

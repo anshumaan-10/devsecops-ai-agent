@@ -261,3 +261,17 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
   <strong>Built for the DevSecOps community</strong><br/>
   <em>Securing code, one pull request at a time.</em>
 </p>
+
+## Getting Started
+
+1. Clone this repository.
+2. Install dependencies as documented in the project files.
+3. Run/build using the project-specific commands.
+
+## Repository Structure
+
+Key source code, configuration, and documentation are organized by folders at the repository root.
+
+## Contribution Guidelines
+
+Please open an issue for major changes and submit focused pull requests with clear descriptions.
